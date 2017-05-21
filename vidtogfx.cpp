@@ -1,48 +1,12 @@
-/*
- *
- * License Applicability. Except to the extent portions of this file are 
- * made subject to an alternative license as permitted in the SGI Free 
- * Software License B, Version 1.1 (the "License"), the contents of this 
- * file are subject only to the provisions of the License. You may not use 
- * this file except in compliance with the License. You may obtain a copy 
- * of the License at Silicon Graphics, Inc., attn: Legal Services, 
- * 1600 Amphitheatre Parkway, Mountain View, CA 94043-1351, or at: 
- * 
- * http://oss.sgi.com/projects/FreeB
- * 
- * Note that, as provided in the License, the Software is distributed 
- * on an "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND 
- * CONDITIONS DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED 
- * WARRANTIES AND CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, 
- * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
- * 
- * OpenML ML Library, 1.0, 12/13/2001, developed by Silicon Graphics, Inc. 
- * ML1.0 is Copyright (c) 2001 Silicon Graphics, Inc. Copyright in any 
- * portions created by third parties is as indicated elsewhere herein. 
- * All Rights Reserved.
- *  
- ***************************************************************************/
+
+#include "sgilicense.h"
+#include "vbob.h"
 
 /****************************************************************************
  *
  * Sample video input to gfx application
  * 
  ****************************************************************************/
-
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <malloc.h>
-#include <unistd.h>
-#include <string.h>
-
-#include <errno.h>
-#define	OSERROR	strerror(oserror())
-
-#include <unistd.h>
-
-#include <ML/ml.h>
-#include <ML/mlu.h>
 
 #include <X11/X.h>   /* X */
 #include <X11/Xlib.h>
@@ -52,8 +16,6 @@
 #include <GL/glx.h>  /* OpenGL */
 #include <GL/gl.h>
 #include <GL/glu.h>
-
-#include <audio.h>
 
 #ifndef	FORMAT_LLX
     #ifdef ML_OS_UNIX
@@ -69,10 +31,6 @@
 /* 
  * Define a few convenience routines
  */
-MLint32 allocateBuffers( void** buffers, MLint32 imageSize,
-			 MLint32 maxBuffers, MLint32 memAlignment);
-
-MLint32 freeBuffers( void** buffers, MLint32 maxBuffers );
 
 static void	createWindowAndContext(Window *win, GLXContext *ctx,int *visualAttr,int width, int height, char name[]);
 
@@ -86,9 +44,6 @@ Window window;
 const char *Usage = 
     "usage: %s -d <device name> [options]\n"
     "options:\n"
-    #ifdef	ML_OS_IRIX
-    "  -a <audio device> send embedded audio to <device> [or '-']\n"
-    #endif
     "  -b #             number buffers to allocate (and preroll)\n"
     "  -c #             count of buffers to transfer (0 = indefinitely)\n"
     "  -d <device name> (run mlquery to find device names)\n"
@@ -104,116 +59,6 @@ const char *Usage =
     "   1080p24 (or) SMPTE274/24P\n"
     ;
 
-static void dparams( MLint64 openPath, MLpv *controls )
-{
-    MLpv *p; char buff[256];
-
-    for( p = controls; p->param != ML_END; p++ ) {
-	MLint32 size = sizeof( buff );
-	MLstatus stat = mlPvToString( openPath, p, buff, &size );
-
-	if( stat != ML_STATUS_NO_ERROR ) {
-	    fprintf( stderr, "mlPvToString: %s\n", mlStatusName( stat ));
-	}
-	else {
-	    fprintf( stderr, "\t%s", buff );
-	    if( p->length != 1 ) fprintf( stderr, " (length %d)", p->length );
-	    fprintf( stderr, "\n" );
-	}
-    }
-}
-
-#ifdef	ML_OS_IRIX
-ALport openAudioContext( char *device )
-{
-    ALport p;
-    ALconfig theconfig = ALnewconfig();
-
-    if( device && device[0] != '-' ) {
-	int i = alGetResourceByName( AL_SYSTEM, device, AL_DEVICE_TYPE );
-	if (i != 0) {
-	    alSetDevice(theconfig, i);
-	}
-	else {
-	    fprintf( stderr, "invalid device name %s\n", device );
-	    exit(1);
-	}
-    }
-
-    p = alOpenPort("dropout","w",theconfig);
-    if (!p) {
-	fprintf(stderr, "openport failed: %s\n",alGetErrorString(oserror()));
-	exit(-1);
-    }
-
-    return p;
-}
-#endif
-
-const char *timingtable[] = {
-    "ML_TIMING_NONE",
-    "ML_TIMING_UNKNOWN",
-    "ML_TIMING_525",
-    "ML_TIMING_625",
-    "ML_TIMING_525_SQ_PIX",
-    "ML_TIMING_625_SQ_PIX",
-    "ML_TIMING_1125_1920x1080_60p",
-    "ML_TIMING_1125_1920x1080_5994p",
-    "ML_TIMING_1125_1920x1080_50p",
-    "ML_TIMING_1125_1920x1080_60i",
-    "ML_TIMING_1125_1920x1080_5994i",
-    "ML_TIMING_1125_1920x1080_50i",
-    "ML_TIMING_1125_1920x1080_30p",
-    "ML_TIMING_1125_1920x1080_2997p",
-    "ML_TIMING_1125_1920x1080_25p",
-    "ML_TIMING_1125_1920x1080_24p",
-    "ML_TIMING_1125_1920x1080_2398p",
-    "ML_TIMING_1125_1920x1080_24PsF",
-    "ML_TIMING_1125_1920x1080_2398PsF",
-    "ML_TIMING_1125_1920x1080_30PsF",
-    "ML_TIMING_1125_1920x1080_2997PsF",
-    "ML_TIMING_1125_1920x1080_25PsF",
-    "ML_TIMING_1250_1920x1080_50p",
-    "ML_TIMING_1250_1920x1080_50i",
-    "ML_TIMING_1125_1920x1035_60i",
-    "ML_TIMING_1125_1920x1035_5994i",
-    "ML_TIMING_750_1280x720_60p",
-    "ML_TIMING_750_1280x720_5994p",
-    "ML_TIMING_525_720x483_5994p",
-};
-
-/*-------------------------------------------------------------------------*/
-
-MLstatus event_wait( MLwaitable pathWaitHandle )
-{
-
-#ifdef	ML_OS_NT
-    if(WaitForSingleObject(pathWaitHandle, INFINITE) != WAIT_OBJECT_0) {
-	fprintf(stderr, "Error waiting for reply\n");
-	return ML_STATUS_INTERNAL_ERROR;
-    }
-    return ML_STATUS_NO_ERROR;
-
-#else	/* ML_OS_UNIX */
-    for( ;; ) {
-	fd_set fdset;
-	int rc;
-
-	FD_ZERO( &fdset);
-	FD_SET( pathWaitHandle, &fdset );
-
-	rc = select( pathWaitHandle+1, &fdset, NULL, NULL, NULL );
-	if( rc < 0 ) {
-	    fprintf( stderr, "select: %s\n", OSERROR );
-	    return ML_STATUS_INTERNAL_ERROR;
-	}
-	if( rc == 1 ) {
-	    return ML_STATUS_NO_ERROR;
-	}
-	/* anything else, loop again */
-    }
-#endif
-}
 
 /*-------------------------------------------------------------------------main
  */
@@ -226,11 +71,6 @@ int main(int argc, char **argv)
   MLint32 imageHeight;
   MLint32 timing = -1, input_timing = -1;
   char *timing_option = NULL;
-#ifdef	ML_OS_IRIX
-  char *audio_device = NULL;
-  ALport audio_handle = NULL;
-  MLint32 abuffsize = 9000;
-#endif
 
   MLint32 transferred_buffers = 0;
   MLint32 requested_buffers = 600;
@@ -265,12 +105,6 @@ int main(int argc, char **argv)
   /* --- get command line args --- */
   while ((c = getopt(argc, argv, "a:b:c:d:ij:s:v:Dh")) != EOF) {
       switch (c) {
-#ifdef	ML_OS_IRIX
-	case 'a':
-	    audio_device = optarg;
-	    break;
-#endif
-
 	case 'b':
 	    maxBuffers = atoi(optarg);
 	    break;
@@ -332,11 +166,6 @@ int main(int argc, char **argv)
 	}
     }
 
-#ifdef	ML_OS_IRIX
-  if( audio_device ) {
-    audio_handle = openAudioContext( audio_device );
-  }
-#endif
   buffers = (void**) malloc( sizeof( void * ) * maxBuffers );
   abuffers = (void**) malloc( sizeof( void * ) * maxBuffers );
 
@@ -581,15 +410,6 @@ int main(int argc, char **argv)
       return -1;
     }
 
-#ifdef	ML_OS_IRIX
-  if( audio_handle &&
-      allocateBuffers( abuffers, abuffsize, maxBuffers, memAlignment)) 
-    {
-      fprintf(stderr, "Cannot allocate memory for audio buffers\n");
-      return -1;
-    }
-#endif
-
   /*
    * Initialize graphics
    */
@@ -625,21 +445,10 @@ int main(int argc, char **argv)
   for (i = 0; i < maxBuffers; i++) 
     {
       MLpv msg[10], *p = msg;
-      #define	setB(cp,id,val,len,mlen)\
-				cp->param = id; \
-				cp->value.pByte = val; \
-				cp->length = len; \
-				cp->maxLength = mlen; \
-				cp++
 
       setB( p, ML_IMAGE_BUFFER_POINTER, (MLbyte*) buffers[i], 0, imageSize );
       setV( p, ML_VIDEO_MSC_INT64, 0 );
       setV( p, ML_VIDEO_UST_INT64, 0 );
-#ifdef	ML_OS_IRIX
-      if( audio_handle ) {
-	  setB( p, ML_AUDIO_BUFFER_POINTER, (MLbyte*) abuffers[i], 0, abuffsize );
-      }
-#endif
 
       if( display_vitc ) {
 	  MLint32 timecode;
@@ -782,23 +591,6 @@ int main(int argc, char **argv)
 
 		    glXSwapBuffers(dpy,window);
 
-		    /* do audio */
-#ifdef	ML_OS_IRIX
-		    if( audio_handle ) {
-		    	/* Assume AUDIO_FORMAT_S16 for now. */
-			unsigned short *buf = (unsigned short *) message[3].value.pByte;
-			unsigned short tmp;
-			int len = (int)message[3].length / sizeof (unsigned short);
-			int i;
-			for (i=0; i<len; i++)
-			{
-				tmp = buf[i];
-				buf[i] = (tmp >> 8) | (tmp << 8);
-			}
-			/* Assume stereo for now. */
-			alWriteFrames( audio_handle, buf, len / 2);
-		    }
-#endif
 		  }
 		else
 		  {
@@ -841,46 +633,8 @@ SHUTDOWN:
   return 0;
 }
 
-/*--------------------------------------------------------------allocateBuffers
- * Allocate an array of image buffers with specified alignment and size
- */
-MLint32 allocateBuffers( void** buffers, 
-			 MLint32 imageSize,
-			 MLint32 maxBuffers, 
-			 MLint32 memAlignment)
-{
-  int i;
-
-  for (i = 0; i < maxBuffers; i++) 
-  {
-    buffers[i] = memalign( memAlignment, imageSize );
-    if (buffers[i] == NULL )
-      {
-	fprintf(stderr,"Memory allocation failed\n");
-	return -1;
-      }
-    /*
-     * Here we touch the buffers, forcing the buffer memory to be mapped
-     * this avoids the need to map the buffers the first time they're used.
-     * We could go the extra step and mpin them, but choose not to here,
-     * trying a simpler approach first.
-     */
-    memset(buffers[i], 0, imageSize);
-  }
-  return 0;
-}
-
 /*------------------------------------------------------------------freeBuffers
 */ 
-MLint32 freeBuffers( void** buffers, MLint32 maxBuffers )
-{
-  int i;
-
-  for (i = 0; i < maxBuffers; i++) 
-    if (buffers[i]) 
-      free(buffers[i]);
-  return 0;
-}
 
 /* ARGSUSED dpy */
 static Bool waitForMapNotify(Display *dpy, XEvent *ev, XPointer arg)

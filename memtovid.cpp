@@ -1,27 +1,6 @@
-/***************************************************************************
- *
- * License Applicability. Except to the extent portions of this file are 
- * made subject to an alternative license as permitted in the SGI Free 
- * Software License B, Version 1.1 (the "License"), the contents of this 
- * file are subject only to the provisions of the License. You may not use 
- * this file except in compliance with the License. You may obtain a copy 
- * of the License at Silicon Graphics, Inc., attn: Legal Services, 
- * 1600 Amphitheatre Parkway, Mountain View, CA 94043-1351, or at: 
- * 
- * http://oss.sgi.com/projects/FreeB
- * 
- * Note that, as provided in the License, the Software is distributed 
- * on an "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND 
- * CONDITIONS DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED 
- * WARRANTIES AND CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, 
- * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
- * 
- * OpenML ML Library, 1.0, 12/13/2001, developed by Silicon Graphics, Inc. 
- * ML1.0 is Copyright (c) 2001 Silicon Graphics, Inc. Copyright in any 
- * portions created by third parties is as indicated elsewhere herein. 
- * All Rights Reserved.
- *  
- ***************************************************************************/
+
+#include "sgilicense.h"
+#include "vbob.h"
 
 /****************************************************************************
  *
@@ -29,36 +8,8 @@
  * 
  ****************************************************************************/
 
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
-#include <assert.h>
-#include <errno.h>
-#include <malloc.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#define OSERROR strerror(oserror())
-
-#include <unistd.h>
-
-#include <ML/ml.h>
-#include <ML/mlu.h>
-
-#include <string>
-#include <vector>
-
-/*
- * Define a few convenience routines
- */
-MLint32 allocateBuffers(void** buffers, MLint32 imageSize,
-    MLint32 maxBuffers, MLint32 memAlignment);
-
 MLint32 fillBuffers(const std::string& fileName, void** buffers, MLint32 imageSize,
     MLint32 maxBuffers);
-
-MLint32 freeBuffers(void** buffers, MLint32 maxBuffers);
 
 const char* Usage = "usage: %s -d <device> -f <filename> [options]\n"
                     "options:\n"
@@ -79,25 +30,7 @@ const char* Usage = "usage: %s -d <device> -f <filename> [options]\n"
                     "    1080i (or) SMPTE274/29I\n"
                     "    1080p24 (or) SMPTE274/24P\n";
 
-static void dparams(MLint64 openPath, MLpv* controls)
-{
-    MLpv* p;
-    char buff[256];
 
-    for (p = controls; p->param != ML_END; p++) {
-        MLint32 size = sizeof(buff);
-        MLstatus stat = mlPvToString(openPath, p, buff, &size);
-
-        if (stat != ML_STATUS_NO_ERROR) {
-            fprintf(stderr, "mlPvToString: %s\n", mlStatusName(stat));
-        } else {
-            fprintf(stderr, "\t%s", buff);
-            if (p->length != 1)
-                fprintf(stderr, " (length %d)", p->length);
-            fprintf(stderr, "\n");
-        }
-    }
-}
 
 /*-------------------------------------------------------------------------*/
 int next_word(FILE* f)
@@ -123,69 +56,7 @@ int next_word(FILE* f)
     return 0x01020304;
 }
 
-const char* timingtable[] = {
-    "ML_TIMING_NONE",
-    "ML_TIMING_UNKNOWN",
-    "ML_TIMING_525",
-    "ML_TIMING_625",
-    "ML_TIMING_525_SQ_PIX",
-    "ML_TIMING_625_SQ_PIX",
-    "ML_TIMING_1125_1920x1080_60p",
-    "ML_TIMING_1125_1920x1080_5994p",
-    "ML_TIMING_1125_1920x1080_50p",
-    "ML_TIMING_1125_1920x1080_60i",
-    "ML_TIMING_1125_1920x1080_5994i",
-    "ML_TIMING_1125_1920x1080_50i",
-    "ML_TIMING_1125_1920x1080_30p",
-    "ML_TIMING_1125_1920x1080_2997p",
-    "ML_TIMING_1125_1920x1080_25p",
-    "ML_TIMING_1125_1920x1080_24p",
-    "ML_TIMING_1125_1920x1080_2398p",
-    "ML_TIMING_1125_1920x1080_24PsF",
-    "ML_TIMING_1125_1920x1080_2398PsF",
-    "ML_TIMING_1125_1920x1080_30PsF",
-    "ML_TIMING_1125_1920x1080_2997PsF",
-    "ML_TIMING_1125_1920x1080_25PsF",
-    "ML_TIMING_1250_1920x1080_50p",
-    "ML_TIMING_1250_1920x1080_50i",
-    "ML_TIMING_1125_1920x1035_60i",
-    "ML_TIMING_1125_1920x1035_5994i",
-    "ML_TIMING_750_1280x720_60p",
-    "ML_TIMING_750_1280x720_5994p",
-    "ML_TIMING_525_720x483_5994p",
-};
 
-/*-------------------------------------------------------------------------*/
-MLstatus event_wait(MLwaitable pathWaitHandle)
-{
-
-#ifdef ML_OS_NT
-    if (WaitForSingleObject(pathWaitHandle, INFINITE) != WAIT_OBJECT_0) {
-        fprintf(stderr, "Error waiting for reply\n");
-        return ML_STATUS_INTERNAL_ERROR;
-    }
-    return ML_STATUS_NO_ERROR;
-
-#else /* ML_OS_UNIX */
-    for (;;) {
-        fd_set fdset;
-        int rc;
-
-        FD_ZERO(&fdset);
-        FD_SET(pathWaitHandle, &fdset);
-
-        rc = select(pathWaitHandle + 1, &fdset, NULL, NULL, NULL);
-        if (rc < 0) {
-            fprintf(stderr, "select: %s\n", OSERROR);
-            return ML_STATUS_INTERNAL_ERROR;
-        }
-        if (rc == 1) {
-            return ML_STATUS_NO_ERROR;
-        }
-        /* anything else, loop again */
-    }
-#endif
-}
 
 /*-------------------------------------------------------------------------main
  */
@@ -539,13 +410,6 @@ int main(int argc, char** argv)
     for (i = 0; i < maxBuffers; i++) {
         MLpv msg[8], *pv = msg;
 
-#define setB(cp, id, val, len, mlen) \
-    cp->param = id;                  \
-    cp->value.pByte = (MLbyte*)val;  \
-    cp->length = len;                \
-    cp->maxLength = mlen;            \
-    cp++
-
         setB(pv, ML_IMAGE_BUFFER_POINTER, buffers[i], imageSize, imageSize);
         setV(pv, ML_VIDEO_MSC_INT64, 0, int64);
         setV(pv, ML_VIDEO_UST_INT64, 0, int64);
@@ -706,37 +570,6 @@ SHUTDOWN:
     return 0;
 }
 
-/*--------------------------------------------------------------allocateBuffers
- * Allocate an array of image buffers with specified alignment and size
- * wrapper around virtualAlloc/memalign
- */
-MLint32 allocateBuffers(void** buffers,
-    MLint32 imageSize,
-    MLint32 maxBuffers,
-    MLint32 memAlignment)
-{
-    printf("imageSize<%d>\n", int(imageSize));
-    printf("maxBuffers<%d>\n", int(maxBuffers));
-    printf("memAlignment<%d>\n", int(memAlignment));
-
-    int i;
-
-    for (i = 0; i < maxBuffers; i++) {
-        buffers[i] = memalign(memAlignment, imageSize);
-        if (buffers[i] == NULL) {
-            fprintf(stderr, "Memory allocation failed\n");
-            return -1;
-        }
-        /*
-     * Here we touch the buffers, forcing the buffer memory to be mapped
-     * this avoids the need to map the buffers the first time they're used.
-     * We could go the extra step and mpin them, but choose not to here,
-     * trying a simpler approach first.
-     */
-        memset(buffers[i], 0, imageSize);
-    }
-    return 0;
-}
 
 /*----------------------------------------------------------------fill buffers
  * Fill each buffer with a recognizable pattern
@@ -943,16 +776,4 @@ int readPPMfile(FILE* fp, char* buffer, int buffersize)
     }
 
     return rc;
-}
-
-/*------------------------------------------------------------------freeBuffers
-*/
-MLint32 freeBuffers(void** buffers, MLint32 maxBuffers)
-{
-    int i;
-
-    for (i = 0; i < maxBuffers; i++)
-        if (buffers[i])
-            free(buffers[i]);
-    return 0;
 }
