@@ -1,3 +1,5 @@
+all:	vidtogfx memtovid controls
+
 vidtogfx:	vidtogfx.cpp
 	g++ vidtogfx.cpp -o vidtogfx -lm -lc -lX11 -lGL -lML -lMLU -laudio
 
