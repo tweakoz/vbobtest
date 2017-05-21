@@ -61,12 +61,12 @@
 MLint32 allocateBuffers( void** buffers, MLint32 imageSize,
 			 MLint32 maxBuffers, MLint32 memAlignment);
 
-MLint32 fillBuffers( char *fileName, void** buffers, MLint32 imageSize,
+MLint32 fillBuffers( const char *fileName, void** buffers, MLint32 imageSize,
 		     MLint32 maxBuffers );
 
 MLint32 freeBuffers( void** buffers, MLint32 maxBuffers ); 
 
-char *Usage = 
+const char *Usage = 
 "usage: %s -d <device> -f <filename> [options]\n"
 "options:\n"
 "    -b #             number buffers to allocate (and preroll)\n"
@@ -127,10 +127,10 @@ int next_word( FILE *f )
 	    rewound++;
 	}
     }
-    return 'USER';
+    return 0x01020304;
 }
 
-char *timingtable[] = {
+const char *timingtable[] = {
     "ML_TIMING_NONE",
     "ML_TIMING_UNKNOWN",
     "ML_TIMING_525",
@@ -209,7 +209,7 @@ int main(int argc, char **argv)
     int c;
     int debug = 0;
     char*  jackName = NULL;
-    char*  fileName = "";
+    const char*  fileName = nullptr;
 
     MLUTimeCode tc;
     FILE *wordfile;
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
 	case 'v':
 	    display_vitc = atoi( optarg );
 	    vitc_line = display_vitc;
-	    user_data = 'USER';
+	    user_data = 0x01020304;
 	    if( vitc_line == -2 ) {
 		vitc_line = 4;
 	    }
@@ -371,17 +371,19 @@ int main(int argc, char **argv)
 
 	/* if timing not specified, see if we can discover the
 	 * input timing */
-	cp = controls;
-	setV( cp, ML_VIDEO_SIGNAL_PRESENT_INT32, timing, int32 );
-	setV( cp, ML_END, 0, int32 );
-	if( mlGetControls(openPath, controls) != ML_STATUS_NO_ERROR) {
-	    fprintf(stderr, "Couldn't get controls on path\n");
-	    dparams( openPath, controls );
-	    return -1;
-	}
-	input_timing = controls[0].value.int32;
-	fprintf(stderr, "Output timing present = %s\n",
-			    timingtable[input_timing]);
+    if( timing == -1 ) {
+    	cp = controls;
+    	setV( cp, ML_VIDEO_SIGNAL_PRESENT_INT32, timing, int32 );
+    	setV( cp, ML_END, 0, int32 );
+    	if( mlGetControls(openPath, controls) != ML_STATUS_NO_ERROR) {
+    	    fprintf(stderr, "Couldn't get controls on path (a)\n");
+    	    dparams( openPath, controls );
+    	    return -1;
+    	}
+    	input_timing = controls[0].value.int32;
+    	fprintf(stderr, "Output timing present = %s\n",
+    			    timingtable[input_timing]);
+    }
 	if( timing == -1 ) {
 	    if( controls[0].value.int32 != ML_TIMING_NONE &&
 		controls[0].value.int32 != ML_TIMING_UNKNOWN ) {
@@ -395,18 +397,26 @@ int main(int argc, char **argv)
 	    cp = controls;
 	    setV( cp, ML_VIDEO_TIMING_INT32, timing, int32 );
 	    setV( cp, ML_END, 0, int32 );
-	    if( mlGetControls(openPath, controls) != ML_STATUS_NO_ERROR) {
-		fprintf(stderr, "Couldn't get controls on path\n");
+        auto mlerr = mlGetControls(openPath, controls);
+        printf( "MLERR<%d>\n", int(mlerr) );
+	    if( mlerr != ML_STATUS_NO_ERROR) {
+		fprintf(stderr, "Couldn't get controls on path (b)\n");
 		dparams( openPath, controls );
 		return -1;
 	    }
 	    timing = controls[0].value.int32;
 	}
-	if( input_timing != ML_TIMING_UNKNOWN && input_timing != timing ) {
+
+	/*if( input_timing != ML_TIMING_UNKNOWN && input_timing != timing ) {
 	    fprintf(stderr, "Cannot set requested timing = %s\n",
 			    timingtable[timing]);
 	    exit(1);
-	}
+	}*/
+    if( ML_TIMING_UNKNOWN == timing ) {
+        fprintf(stderr, "Cannot set requested timing = %s\n",
+                timingtable[timing]);
+        exit(1);
+    }
 
 	/* now set the timing and video precision */
 	cp = controls;
@@ -551,7 +561,7 @@ int main(int argc, char **argv)
 
     if( fillBuffers( fileName, buffers, imageSize, maxBuffers)) 
     {
-      fprintf(stderr, "Cannot allocate memory for image buffers\n");
+      fprintf(stderr, "Cannot fill memory for image buffers\n");
       return -1;
     }
 
@@ -749,6 +759,10 @@ MLint32 allocateBuffers( void** buffers,
 			 MLint32 maxBuffers, 
 			 MLint32 memAlignment)
 {
+    printf( "imageSize<%d>\n", int(imageSize) );
+    printf( "maxBuffers<%d>\n", int(maxBuffers) );
+    printf( "memAlignment<%d>\n", int(memAlignment) );
+
   int i;
 
   for (i = 0; i < maxBuffers; i++) 
@@ -773,7 +787,7 @@ MLint32 allocateBuffers( void** buffers,
 /*----------------------------------------------------------------fill buffers
  * Fill each buffer with a recognizable pattern
  */
-MLint32 fillBuffers( char *fileName, void** buffers, MLint32 imageSize,
+MLint32 fillBuffers( const char *fileName, void** buffers, MLint32 imageSize,
 		     MLint32 maxBuffers)
 {
   int i;

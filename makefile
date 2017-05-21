@@ -1,13 +1,13 @@
 all:	vidtogfx memtovid controls
 
-vidtogfx:	vidtogfx.cpp
-	g++ vidtogfx.cpp -o vidtogfx -lm -lc -lX11 -lGL -lML -lMLU -laudio
+vidtogfx: vidtogfx.cpp
+	g++ --std=c++11 vidtogfx.cpp -o vidtogfx -lm -lc -lX11 -lGL -lML -lMLU -laudio
 
-memtovid:	memtovid.cpp
-	g++ memtovid.cpp -o memtovid -lm -lc -lX11 -lGL -lML -lMLU -laudio
+memtovid: memtovid.cpp makefile
+	g++ --std=c++11 -O3 memtovid.cpp -o memtovid -lm -lc -lML -lMLU
 
-controls:	controls.cpp
-	g++ controls.cpp -o controls -lm -lc -lX11 -lGL -lML -lMLU -laudio
+controls: controls.cpp
+	g++ --std=c++11 controls.cpp -o controls -lm -lc -lML -lMLU
 
 clean:
 	rm -f controls

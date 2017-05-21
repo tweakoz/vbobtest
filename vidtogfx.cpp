@@ -414,12 +414,16 @@ int main(int argc, char **argv)
 	input_timing = controls[0].value.int32;
 	fprintf(stderr, "Input Timing Present = %s\n",
 			    timingtable[input_timing]);
-	if( timing == -1 ) {
+	
+    printf( "wtfa\n");
+    if( timing == -1 ) {
 	    if( controls[0].value.int32 != ML_TIMING_NONE &&
-		controls[0].value.int32 != ML_TIMING_UNKNOWN ) {
-		timing = input_timing;
+		controls[0].value.int32 != ML_TIMING_UNKNOWN )
+        {
+		  timing = input_timing;
 	    }
 	}
+    printf( "wtfb\n");
 
 	/* if we can't discover the timing, then just get what it's
 	 * currently set to and use that. */
@@ -441,9 +445,11 @@ int main(int argc, char **argv)
 	}
 
 	/* now set the timing and video precision */
-	cp = controls;
+	
+
+    cp = controls;
 	setV( cp, ML_VIDEO_TIMING_INT32, timing );
-	setV( cp, ML_VIDEO_PRECISION_INT32, 10 );
+	//setV( cp, ML_VIDEO_PRECISION_INT32, 10 );
 	setV( cp, ML_END, 0 );
 	if( mlSetControls(openPath, controls) != ML_STATUS_NO_ERROR) {
 	    fprintf(stderr, "Couldn't set controls on path\n");
@@ -451,9 +457,9 @@ int main(int argc, char **argv)
 	    return -1;
 	}
 
-        if(debug) {
-	    printf(" Timing %d\n", timing);
-        }
+    if(debug) {
+        printf(" Timing %d\n", timing);
+    }
 
 	/* now set remainder of controls */
 	cp = controls;
@@ -505,6 +511,7 @@ int main(int argc, char **argv)
 
 	/* adjust sizes for interleaved capture */
 	{
+        auto x = 1;
 	    MLpv *sp  = mlPvFind( controls, ML_VIDEO_START_Y_F1_INT32 );
 	    MLpv *vp  = mlPvFind( controls, ML_VIDEO_HEIGHT_F1_INT32 );
 	    MLpv *ip  = mlPvFind( controls, ML_IMAGE_HEIGHT_1_INT32 );
