@@ -298,7 +298,7 @@ int main(int argc, char **argv)
 	}
     }
 
-    buffers = malloc( sizeof( void * ) * maxBuffers );
+    buffers = (void**) malloc( sizeof( void * ) * maxBuffers );
 
 
     /*
@@ -859,7 +859,7 @@ MLint32 fillBuffers( char *fileName, void** buffers, MLint32 imageSize,
 	}
 	if( ppmfile ) {
 	    int readPPMfile( FILE *fp, char *buffer, int buffersize );
-	    rc = readPPMfile( fp, buffers[i], imageSize );
+	    rc = readPPMfile( fp, (char*) buffers[i], imageSize );
 	    if( rc != 1 ) { perror( "fread" ); return -1; }
 	}
 	else {

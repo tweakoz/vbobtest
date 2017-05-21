@@ -345,8 +345,8 @@ int main(int argc, char **argv)
     audio_handle = openAudioContext( audio_device );
   }
 #endif
-  buffers = malloc( sizeof( void * ) * maxBuffers );
-  abuffers = malloc( sizeof( void * ) * maxBuffers );
+  buffers = (void**) malloc( sizeof( void * ) * maxBuffers );
+  abuffers = (void**) malloc( sizeof( void * ) * maxBuffers );
 
     // open requested path...
 
@@ -633,12 +633,12 @@ int main(int argc, char **argv)
 				cp->maxLength = mlen; \
 				cp++
 
-      setB( p, ML_IMAGE_BUFFER_POINTER, buffers[i], 0, imageSize );
+      setB( p, ML_IMAGE_BUFFER_POINTER, (MLbyte*) buffers[i], 0, imageSize );
       setV( p, ML_VIDEO_MSC_INT64, 0 );
       setV( p, ML_VIDEO_UST_INT64, 0 );
 #ifdef	ML_OS_IRIX
       if( audio_handle ) {
-	  setB( p, ML_AUDIO_BUFFER_POINTER, abuffers[i], 0, abuffsize );
+	  setB( p, ML_AUDIO_BUFFER_POINTER, (MLbyte*) abuffers[i], 0, abuffsize );
       }
 #endif
 
