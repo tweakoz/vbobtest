@@ -37,17 +37,9 @@
 #include <string.h>
 
 #include <errno.h>
-#ifndef	ML_OS_IRIX
-#define	oserror()	errno
-#endif
 #define	OSERROR	strerror(oserror())
 
-#ifdef	ML_OS_NT
-#include <ML/getopt.h>
-#include <io.h>
-#else
 #include <unistd.h>
-#endif
 
 #include <ML/ml.h>
 #include <ML/mlu.h>
@@ -61,9 +53,7 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 
-#ifdef	ML_OS_IRIX
 #include <audio.h>
-#endif
 
 #ifndef	FORMAT_LLX
     #ifdef ML_OS_UNIX
@@ -89,10 +79,11 @@ static void	createWindowAndContext(Window *win, GLXContext *ctx,int *visualAttr,
 /* 
  * And a few global variables
  */
-Display	        *dpy;
-Window	        window;
 
-char *Usage = 
+Display* dpy = nullptr;
+Window window;
+
+const char *Usage = 
     "usage: %s -d <device name> [options]\n"
     "options:\n"
     #ifdef	ML_OS_IRIX
@@ -159,7 +150,7 @@ ALport openAudioContext( char *device )
 }
 #endif
 
-char *timingtable[] = {
+const char *timingtable[] = {
     "ML_TIMING_NONE",
     "ML_TIMING_UNKNOWN",
     "ML_TIMING_525",
@@ -192,6 +183,7 @@ char *timingtable[] = {
 };
 
 /*-------------------------------------------------------------------------*/
+
 MLstatus event_wait( MLwaitable pathWaitHandle )
 {
 
@@ -663,7 +655,7 @@ int main(int argc, char **argv)
 	  }
 	  mluTCPack( &timecode, &tc );
 	  setV( p, ML_VITC_TIMECODE_INT32, timecode );
-	  setV( p, ML_VITC_USERDATA_INT32, 'DATA' );
+	  setV( p, ML_VITC_USERDATA_INT32, 0x01020304 );
       }
       setV( p, ML_END, 0 );
 

@@ -37,25 +37,16 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#ifndef ML_OS_IRIX
-#define oserror() errno
-#endif
 #define OSERROR strerror(oserror())
 
-#ifdef ML_OS_NT
-#include <ML/getopt.h>
-#include <io.h>
-#define memalign(alignment, size) malloc(size) // FIXME
-#else
 #include <unistd.h>
-#endif
 
 #include <ML/ml.h>
 #include <ML/ml_private.h>
 #include <ML/mlu.h>
 
 int debug = 0;
-char* Usage = "\n"
+const char* Usage = "\n"
               "usage: %s <-d device> <-j jack> [-r file] [-w file] [-gD] [control] "
               "[control=value] ...\n"
               "where:\n"
@@ -76,8 +67,8 @@ char* Usage = "\n"
               "\tjack name syntax is:  [device[:unit].]jack\n\n";
 
 int print_controls(MLint64 openPath, FILE* f);
-void flush_cmds(MLopenid openPath, char* rw_mode, char** cmds, int count);
-void dparams(MLint64 openPath, MLpv* controls, char* header)
+void flush_cmds(MLopenid openPath, const char* rw_mode, const char** cmds, int count);
+void dparams(MLint64 openPath, MLpv* controls, const char* header)
 {
     MLpv* p;
     char buff[256];
@@ -185,8 +176,8 @@ int main(int argc, char** argv)
     }
 
     {
-        char* read_cmds[300];
-        char* write_cmds[300];
+        const char* read_cmds[300];
+        const char* write_cmds[300];
         int read_cmd_index = 0;
         int write_cmd_index = 0;
 
@@ -213,7 +204,7 @@ int main(int argc, char** argv)
         }
 
         while (optind < argc) {
-            char* p = argv[optind++];
+            const char* p = argv[optind++];
 
             if (strchr(p, '=')) { // write (put) value
                 if (read_cmd_index) {
@@ -266,13 +257,13 @@ int main(int argc, char** argv)
 
 #include <ctype.h>
 
-void flush_cmds(MLopenid openPath, char* rw_mode, char** cmds, int count)
+void flush_cmds(MLopenid openPath, const char* rw_mode, const char** cmds, int count)
 {
     MLpv msg[300], *mp = msg;
     int i = 0;
 
     while (i < count) {
-        char* p = cmds[i++];
+        const char* p = cmds[i++];
         MLint32 size = strlen(p);
         MLint64 data[512];
 
