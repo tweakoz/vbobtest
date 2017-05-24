@@ -8,17 +8,13 @@
  * 
  ****************************************************************************/
 
-MLint32 fillBuffers(const std::string& fileName, void** buffers, MLint32 imageSize,
-    MLint32 maxBuffers);
+MLint32 fillBuffers(void** buffers, MLint32 imageSize, MLint32 maxBuffers);
 
-const char* Usage = "usage: %s -d <device> -f <filename> [options]\n"
+const char* Usage = "usage: %s -d <device> [options]\n"
                     "options:\n"
                     "    -b #             number buffers to allocate (and preroll)\n"
                     "    -c #             count of buffers to transfer (0 = indefinitely)\n"
                     "    -d <device name> (run mlquery to find device names)\n"
-                    "    -f <filename>    save pixels in 'filename'\n"
-                    "                     (use '%%d' in filename to make seperate image files)\n"
-                    "                     (use .ppm extension to make PPM files)\n"
                     "    -j <jack name>   (run mlquery to find jack names)\n"
                     "    -s <timing>      set video standard\n"
                     "    -v <line #>      place vitc on line # (-2 to dynamically move)\n"
@@ -66,13 +62,12 @@ int main(int argc, char** argv)
 
     MLint32 transferred_buffers = 0;
     MLint32 requested_buffers = 1000;
-    MLint32 maxBuffers = 10;
+    MLint32 maxBuffers = 30;
     void** buffers;
 
     int c;
     int debug = 0;
     char* jackName = NULL;
-    std::string fileName;
 
     MLUTimeCode tc;
     FILE* wordfile;
@@ -94,7 +89,7 @@ int main(int argc, char** argv)
     char* devName;
 
     /* --- get command line args --- */
-    while ((c = getopt(argc, argv, "b:c:d:Df:hj:s:v:")) != EOF) {
+    while ((c = getopt(argc, argv, "b:c:d:D:hj:s:v:")) != EOF) {
         switch (c) {
         case 'b':
             maxBuffers = atoi(optarg);
@@ -110,10 +105,6 @@ int main(int argc, char** argv)
 
         case 'D':
             debug++;
-            break;
-
-        case 'f':
-            fileName = optarg;
             break;
 
         case 'j':
@@ -210,18 +201,20 @@ int main(int argc, char** argv)
         memset(controls, 0, sizeof(controls));
 
 /* Video parameters, describing the signal at the jack */
-#define setV(cp, id, val, typ) \
-    cp->param = id;            \
-    cp->value.typ = val;       \
-    cp->length = 1;            \
-    cp++
+
+        auto setVi32 = [&cp](MLint32 id, MLint32 val) {
+            cp->param = id;            
+            cp->value.int32 = val;       
+            cp->length = 1;            
+            cp++;
+        };
 
         /* if timing not specified, see if we can discover the
      * input timing */
         if (timing == -1) {
             cp = controls;
-            setV(cp, ML_VIDEO_SIGNAL_PRESENT_INT32, timing, int32);
-            setV(cp, ML_END, 0, int32);
+            setVi32(ML_VIDEO_SIGNAL_PRESENT_INT32, timing);
+            setVi32(ML_END, 0);
             if (mlGetControls(openPath, controls) != ML_STATUS_NO_ERROR) {
                 fprintf(stderr, "Couldn't get controls on path (a)\n");
                 dparams(openPath, controls);
@@ -241,8 +234,8 @@ int main(int argc, char** argv)
      * currently set to and use that. */
         if (timing == -1) {
             cp = controls;
-            setV(cp, ML_VIDEO_TIMING_INT32, timing, int32);
-            setV(cp, ML_END, 0, int32);
+            setVi32(ML_VIDEO_TIMING_INT32, timing);
+            setVi32(ML_END, 0);
             auto mlerr = mlGetControls(openPath, controls);
             printf("MLERR<%d>\n", int(mlerr));
             if (mlerr != ML_STATUS_NO_ERROR) {
@@ -266,9 +259,9 @@ int main(int argc, char** argv)
 
         /* now set the timing and video precision */
         cp = controls;
-        setV(cp, ML_VIDEO_TIMING_INT32, timing, int32);
-        setV(cp, ML_VIDEO_PRECISION_INT32, 10, int32);
-        setV(cp, ML_END, 0, int32);
+        setVi32(ML_VIDEO_TIMING_INT32, timing);
+        setVi32(ML_VIDEO_PRECISION_INT32, 10);
+        setVi32(ML_END, 0);
         if (mlSetControls(openPath, controls) != ML_STATUS_NO_ERROR) {
             fprintf(stderr, "Couldn't set controls on path\n");
             dparams(openPath, controls);
@@ -306,12 +299,12 @@ int main(int argc, char** argv)
             MLU_TIMING_IGNORE_INVALID);
 
         /* the following are variable - set for our need to display on gfx */
-        setV(cp, ML_IMAGE_COMPRESSION_INT32, ML_COMPRESSION_UNCOMPRESSED, int32);
-        setV(cp, ML_IMAGE_COLORSPACE_INT32, ML_COLORSPACE_RGB_601_FULL, int32);
-        setV(cp, ML_IMAGE_SAMPLING_INT32, ML_SAMPLING_444, int32);
-        setV(cp, ML_IMAGE_PACKING_INT32, ML_PACKING_8, int32);
-        setV(cp, ML_IMAGE_INTERLEAVE_MODE_INT32,
-            ML_INTERLEAVE_MODE_INTERLEAVED, int32);
+        setVi32(ML_IMAGE_COMPRESSION_INT32, ML_COMPRESSION_UNCOMPRESSED);
+        setVi32(ML_IMAGE_COLORSPACE_INT32, ML_COLORSPACE_RGB_601_FULL);
+        setVi32(ML_IMAGE_SAMPLING_INT32, ML_SAMPLING_444);
+        setVi32(ML_IMAGE_PACKING_INT32, ML_PACKING_8);
+        setVi32(ML_IMAGE_INTERLEAVE_MODE_INT32,
+            ML_INTERLEAVE_MODE_INTERLEAVED);
 
         /* did the user request VITC processing? */
         if (display_vitc != -5) {
@@ -319,7 +312,7 @@ int main(int argc, char** argv)
             if (v == -2) {
                 v = 4;
             }
-            setV(cp, ML_VITC_LINE_NUMBER_INT32, v, int32);
+            setVi32(ML_VITC_LINE_NUMBER_INT32, v);
             if (timing == ML_TIMING_525) {
                 vitc_line_max = 19;
             } else if (timing == ML_TIMING_625) {
@@ -397,7 +390,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    if (fillBuffers(fileName, buffers, imageSize, maxBuffers)) {
+    if (fillBuffers(buffers, imageSize, maxBuffers)) {
         fprintf(stderr, "Cannot fill memory for image buffers\n");
         return -1;
     }
@@ -410,9 +403,22 @@ int main(int argc, char** argv)
     for (i = 0; i < maxBuffers; i++) {
         MLpv msg[8], *pv = msg;
 
+        auto setVi32 = [&pv](MLint32 id, MLint32 val) {
+            pv->param = id;            
+            pv->value.int32 = val;       
+            pv->length = 1;            
+            pv++;
+        };
+        auto setVi64 = [&pv](MLint32 id, MLint64 val) {
+            pv->param = id;            
+            pv->value.int64 = val;       
+            pv->length = 1;            
+            pv++;
+        };
+
         setB(pv, ML_IMAGE_BUFFER_POINTER, buffers[i], imageSize, imageSize);
-        setV(pv, ML_VIDEO_MSC_INT64, 0, int64);
-        setV(pv, ML_VIDEO_UST_INT64, 0, int64);
+        setVi64(ML_VIDEO_MSC_INT64, 0);
+        setVi64(ML_VIDEO_UST_INT64, 0);
 
         if (display_vitc != -5) {
             MLint32 timecode;
@@ -435,13 +441,13 @@ int main(int argc, char** argv)
                     tc.evenField ? ":" : ".",
                     tc.frames, timecode);
             }
-            setV(pv, ML_VITC_LINE_NUMBER_INT32, vitc_line, int32);
-            setV(pv, ML_VITC_TIMECODE_INT32, timecode, int32);
-            setV(pv, ML_VITC_USERDATA_INT32, user_data, int32);
+            setVi32(ML_VITC_LINE_NUMBER_INT32, vitc_line);
+            setVi32(ML_VITC_TIMECODE_INT32, timecode);
+            setVi32(ML_VITC_USERDATA_INT32, user_data);
 
             mluTCAddFrames(&tc, &tc, 1, NULL);
         }
-        setV(pv, ML_END, 0, int64);
+        setVi64(ML_END, 0);
 
         if (mlSendBuffers(openPath, msg)) {
             fprintf(stderr, "Error sending buffers.\n");
@@ -575,45 +581,52 @@ SHUTDOWN:
  * Fill each buffer with a recognizable pattern
  */
 
-MLint32 fillBuffersFromBytes(void** buffers, MLint32 imageSize,MLint32 maxBuffers)
+MLint32 fillBuffersFromBytes(void** buffers,
+                             MLint32 imageSize,
+                             MLint32 maxBuffers)
 {
-    for (int i = 0; i < maxBuffers; i++) {
+    for (int iframe = 0; iframe < maxBuffers; iframe++) {
         MLbyte* p;
         int x, y;
 
-        for (p = (MLbyte*)buffers[i]; p < (MLbyte*)buffers[i] + imageSize / 5;) {
-            *p++ = 0x0;
-            *p++ = 0x0;
-            *p++ = 0x0;
+        int pixcounter = iframe;
+
+        for (p = (MLbyte*)buffers[iframe]; 
+             p < (MLbyte*)buffers[iframe] + imageSize / 5;) {
+            MLbyte W = (MLbyte) (pixcounter)&0xff;
+            *p++ = W;
+            *p++ = W;
+            *p++ = 0;
+            pixcounter++;
         }
 
-        for (; p < (MLbyte*)buffers[i] + imageSize * 2 / 5;) {
-            *p++ = (MLbyte)0xe0;
-            *p++ = (MLbyte)0x00;
-            *p++ = (MLbyte)0x00;
+        for (; p < (MLbyte*)buffers[iframe] + imageSize * 2 / 5;) {
+            MLbyte R = (MLbyte) rand()%255;
+            *p++ = (MLbyte)R;
+            *p++ = (MLbyte)0;
+            *p++ = (MLbyte)0;
         }
 
-        for (; p < (MLbyte*)buffers[i] + imageSize * 3 / 5;) {
-            *p++ = (MLbyte)0x00;
-            *p++ = (MLbyte)0xe0;
-            *p++ = (MLbyte)0x0;
+        for (; p < (MLbyte*)buffers[iframe] + imageSize * 3 / 5;) {
+            MLbyte G = (MLbyte) rand()%255;
+            *p++ = (MLbyte)0;
+            *p++ = (MLbyte)G;
+            *p++ = (MLbyte)0;
         }
 
-        for (; p < (MLbyte*)buffers[i] + imageSize * 4 / 5;) {
-            *p++ = (MLbyte)0x00;
-            *p++ = (MLbyte)0x00;
-            *p++ = (MLbyte)0xe0;
+        for (; p < (MLbyte*)buffers[iframe] + imageSize * 4 / 5;) {
+            MLbyte B = (MLbyte) rand()%255;
+            *p++ = (MLbyte)0;
+            *p++ = (MLbyte)0;
+            *p++ = (MLbyte)B;
         }
 
-        for (; p < (MLbyte*)buffers[i] + imageSize;) {
-            *p++ = (MLbyte)0xe0;
-            *p++ = (MLbyte)0xe0;
-            *p++ = (MLbyte)0xe0;
+        for (; p < (MLbyte*)buffers[iframe] + imageSize;) {
+            MLbyte W = (MLbyte) rand()%255;
+            *p++ = (MLbyte)W;
+            *p++ = (MLbyte)W;
+            *p++ = (MLbyte)W;
         }
-
-        for (y = 0; y < 100; y++)
-            for (x = 0; x < i * 10 + 100; x++)
-                *((MLbyte*)buffers[i] + ((y * 720) + x) * 3) = (MLbyte)0x80;
 
         printf(".");
         fflush(stdout);    
@@ -621,159 +634,12 @@ MLint32 fillBuffersFromBytes(void** buffers, MLint32 imageSize,MLint32 maxBuffer
     return 0;
 }
 
-MLint32 fillBuffersFromFile(const std::string& fileName, 
-                            void** buffers, 
-                            MLint32 imageSize,
-                            MLint32 maxBuffers )
-{
-    int fd;
-    FILE* fp;
-    bool imagefiles = false; //(strchr(fileName, '%') != NULL);
-    bool ppmfile = (fileName.find(".ppm") != std::string::npos);
-
-    if (!imagefiles) {
-        if (ppmfile) {
-            fp = fopen(fileName.c_str(), "rb");
-            if (fp < 0) {
-                perror(fileName.c_str());
-                return -1;
-            }
-        } else {
-            fd = open(fileName.c_str(), O_RDONLY, 0666);
-            if (fd < 0) {
-                perror(fileName.c_str());
-                return -1;
-            }
-        }
-    }
-
-    for (int i = 0; i < maxBuffers; i++) {
-        int rc;
-        if (imagefiles) {
-            char fn[100];
-            sprintf(fn, fileName.c_str(), i);
-            if (ppmfile) {
-                fp = fopen(fn, "rb");
-                if (fp < 0) {
-                    perror(fn);
-                    return -1;
-                }
-            } else {
-                fd = open(fn, O_CREAT | O_RDONLY, 0666);
-                if (fd < 0) {
-                    perror(fn);
-                    return -1;
-                }
-            }
-        }
-        if (ppmfile) {
-            int readPPMfile(FILE * fp, char* buffer, int buffersize);
-            rc = readPPMfile(fp, (char*)buffers[i], imageSize);
-            if (rc != 1) {
-                perror("fread");
-                return -1;
-            }
-        } else {
-            rc = read(fd, buffers[i], imageSize);
-            if (rc != imageSize) {
-                perror("read");
-                return -1;
-            }
-        }
-
-        if (imagefiles) {
-            if (ppmfile) {
-                fclose(fp);
-            } else {
-                close(fd);
-            }
-        }
-        printf(".");
-        fflush(stdout);
-    }    
-    return 0;
-}
-
-MLint32 fillBuffers(const std::string& fileName, void** buffers, MLint32 imageSize,
-    MLint32 maxBuffers)
+MLint32 fillBuffers(void** buffers, MLint32 imageSize, MLint32 maxBuffers)
 {
     printf("Filling buffers: ");
-
-    if (fileName.length())
-        printf("from %s: ", fileName.c_str());
-
-    fflush(stdout);
-
-    if (0 == fileName.length()) 
-        fillBuffersFromBytes(buffers,imageSize,maxBuffers);
-    else 
-        fillBuffersFromFile(fileName,buffers,imageSize,maxBuffers);
-
+    fillBuffersFromBytes(buffers,imageSize,maxBuffers);
     printf("done.\n");
     return 0;
 }
 
-static int _readInt(FILE* fptr, int* result)
-{
-    int c;
 
-    while ((c = fgetc(fptr)) > 0) {
-        switch (c) {
-        case '#': /* ignore rest of comment line */
-        {
-            char line[71];
-            fgets(line, 71, fptr);
-            continue;
-        }
-        case ' ':
-        case '\t':
-        case '\n':
-        case '\r':
-            continue;
-        default:
-            ungetc(c, fptr);
-            return fscanf(fptr, "%d", result) == 1;
-        }
-    }
-    return -1;
-}
-
-int readPPMfile(FILE* fp, char* buffer, int buffersize)
-{
-    char filetype[3];
-    int maxValue, imageWidth, imageHeight, isize;
-    int rc;
-
-    if (fgets(filetype, 3, fp) < 0) {
-        fprintf(stderr, "can't get filetype\n");
-        exit(2);
-    }
-    if ((filetype[0] != 'P' && filetype[0] != 'S') || filetype[1] != '6') {
-        fprintf(stderr, "not a ppm file: %s\n", filetype);
-        exit(2);
-    }
-
-    _readInt(fp, &imageWidth);
-    _readInt(fp, &imageHeight);
-    _readInt(fp, &maxValue);
-    fgetc(fp); /* skip over single whitespace char after maxValue */
-
-    isize = imageWidth * imageHeight * 3;
-
-    if (isize > buffersize) {
-        fprintf(stderr, "Error: image size %d buffer size %d\n",
-            isize, buffersize);
-        fprintf(stderr, "imageWidth %d imageHeight %d maxValue %d\n",
-            imageWidth, imageHeight, maxValue);
-        exit(2);
-    }
-    if ((rc = fread(buffer, isize, 1, fp)) != 1) {
-        fprintf(stderr, "fread returns %d\n", rc);
-        exit(2);
-    }
-    if (isize < buffersize) {
-        memset(&buffer[isize], 0, buffersize - isize);
-    }
-
-    return rc;
-}
