@@ -178,6 +178,21 @@ int main(int argc, char** argv)
         goto SHUTDOWN;
     }
 
+    {
+        MLpv* caproot = nullptr;
+        MLpv* capnode = nullptr;
+        // get capabilities
+        MLint32 capr = mlGetCapabilities( jackId, &caproot );
+        assert(capr== ML_STATUS_NO_ERROR);
+        printf( "caproot<%p>\n", (void*) caproot );
+
+        auto x = mlPvFind(caproot,ML_JACK_ALIAS_IDS);
+        printf( "JackAliasIds<%p>\n", (void*) x );
+        //assert(x!=nullptr);
+        mlFreeCapabilities(caproot);
+    }
+
+
     /* 
      * Set the path parameters.  In this case, we wish to
      * transfer high-definition or standard-definition,
