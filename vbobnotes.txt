@@ -1,0 +1,253 @@
+//////////////////////////////////////
+// theory
+//////////////////////////////////////
+
+ON DM3
+
+GIF FPGA : FPGA LocalBus Controller / XIO<>FPGABUS IF
+   (contains ODMA unit)
+   (contains IDMA unit)
+VIF and HDOC FPGAs : VideoIO format/control (connects to LVDS)
+CLINK FPGA : LVDS ChannelLink control/status
+Packer FPGA : packs data into odma fifo ?
+Unpacker FPGA : unpacks from idma fifo ?
+LVDS (189-519.75 mhz)
+
+         XIO BUS
+            |
+  /-------(GIF)---------\
+ODMA       PIO        IDMA
+FIFO        |         FIFO
+/|\         |         \|/
+(PACKER)    |       (UNPACKER)
+FPGA        |        FPGA
+/|\   (VIF) |  (HDOC) \|/
+INPV  FPGA  |   FPGA  OUTV
+FIFO<-->|   |     |<->FIFO
+/|\     |   |     |    \|/
+CSPACE--| (CLINK) |   CSPACE
+CONV    |  FPGA   |    CONV
+FPGA<---*    |    *<---FPGA
+(XCC)  /|\   |   /|\    (XCC)
+        |    |    |
+      LVDS-B/ \LVDS-A
+       RX        TX
+
+-r--r--r--    1 root     sys        99681 Jun 13 23:12 clink.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 diag_hdoc.xla.mcs
+-r--r--r--    1 root     sys       895193 Jun 13 23:12 diag_ixcc.mcs
+-r--r--r--    1 root     sys       895193 Jun 13 23:12 diag_oxcc.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 diag_packer.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 diag_unpacker.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 diag_vif.xla.mcs
+-r--r--r--    1 root     sys       504169 Jun 13 23:12 gif_1.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 hdoc_hd.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 hdoc_hd_fast.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 hdoc_sd.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 hdoc_sd_fast.xla.mcs
+-r--r--r--    1 root     sys       895193 Jun 13 23:12 ixcc.mcs
+-r--r--r--    1 root     sys       895193 Jun 13 23:12 ixcc_2.mcs
+-r--r--r--    1 root     sys       895193 Jun 13 23:12 oxcc.mcs
+-r--r--r--    1 root     sys       895193 Jun 13 23:12 oxcc_2.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_4224_10_10_10_2.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_4224_10_10_10_2_3214.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_422_10.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_422_10_3214.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_422_10in16l.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_422_10in16l_3214.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_422_10in16r.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_422_10in16r_3214.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_422_8.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_422_8_3214.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_4444_10_10_10_2.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_4444_10_10_10_2_r.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_4444_12.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_4444_8.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_4444_8_r.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_444_10in16l.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_444_10in16r.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_444_12in16l.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_444_12in16r.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_444_8.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 packer_444_8_r.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_4224_10_10_10_2.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_4224_10_10_10_2_3214.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_422_10.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_422_10_3214.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_422_10in16l.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_422_10in16l_3214.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_422_10in16r.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_422_10in16r_3214.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_422_8.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_422_8_3214.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_4444_10_10_10_2.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_4444_10_10_10_2_r.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_4444_12.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_4444_8.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_4444_8_r.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_444_10in16l.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_444_10in16r.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_444_12in16l.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_444_12in16r.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_444_8.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 unpacker_444_8_r.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 vif_hd.xla.mcs
+-r--r--r--    1 root     sys       292744 Jun 13 23:12 vif_sd.xla.mcs
+
+//////////////////////////////////////
+// VBOB IC's
+//////////////////////////////////////
+
+// SD input
+
+SDI_INPDES_A   GENNUM  GS9020A 
+SDI_INPPRC_A   GENNUM  GS9025A 
+
+SDI_INPDES_B   GENNUM  GS9020A 
+SDI_INPPRC_B   GENNUM  GS9025A 
+
+// HD input
+
+HDI_INORCV_A   GENNUM  GS1540
+HDI_INPROC_A   GENNUM  GS1510
+
+HDI_INPRCV_B   GENNUM  GS1540
+HDI_INPROC_B   GENNUM  GS1510
+
+// HD output
+
+HDI_OUTPRC_A   GENNUM  GS1511
+HDI_OUTSER_A   GENNUM  GS1522
+
+HDI_OUTPRC_B   GENNUM  GS1511
+HDI_OUTSER_B   GENNUM  GS1522
+
+// FPGA
+
+10B SPARTAN XCS10XL (near SDI_INPxxx)
+30A SPARTAN XCS30XL (near coldfire mcf5206eft54)
+
+10A SPARTAN XCS10XL (near power/HDI_OUTROC)
+30B SPARTAN XCS30XL (near 10A)
+30C SPARTAN XCS30XL (near 30B and mezzanine)
+
+//////////////////////////////////////
+// VBOB ucodes
+//////////////////////////////////////
+
+(from xilinx docs)
+XCS10XL bitstream len: 95752 bytes
+XCS30XL bitstream len: 249168 bytes
+
+
+.bit sizes
+(VBOBISE)michael/projects/vbob >ls -l *.bit
+-rw-rw-r-- 1 michael michael  16108 Jun 17 15:51 hdcntl.bit
+-rw-rw-r-- 1 michael michael  16108 Jun 17 15:57 sdcntl.bit
+-rw-rw-r-- 1 michael michael  37384 Jun 17 15:52 glock.bit
+-rw-rw-r-- 1 michael michael  69960 Jun 17 15:52 glue.bit
+
+-rw-rw-r-- 1 michael michael  69960 Jun 17 15:55 hdoc_hd.bit
+-rw-rw-r-- 1 michael michael  69960 Jun 17 15:55 hdoc_sd.bit
+
+-rw-rw-r-- 1 michael michael  78816 Jun 17 15:55 out.bit
+-rw-rw-r-- 1 michael michael 108040 Jun 17 15:48 dctl.bit
+-rw-rw-r-- 1 michael michael 130072 Jun 17 15:52 fmta.bit
+-rw-rw-r-- 1 michael michael 130072 Jun 17 15:52 fmtb.bit
+-rw-rw-r-- 1 michael michael 180312 Jun 17 15:54 sclxp3.bit
+-rw-rw-r-- 1 michael michael 180312 Jun 17 15:54 scxp13.bit
+-rw-rw-r-- 1 michael michael 180312 Jun 17 15:54 scxp24.bit
+-rw-rw-r-- 1 michael michael 219036 Jun 17 15:53 oxcc_1.bit
+-rw-rw-r-- 1 michael michael 219036 Jun 17 15:53 oxcc_2.bit
+-rw-rw-r-- 1 michael michael 219036 Jun 17 15:53 oxcc_3.bit
+-rw-rw-r-- 1 michael michael 219036 Jun 17 15:53 oxcc_4.bit
+-rw-rw-r-- 1 michael michael 219036 Jun 17 15:53 oxcc_5.bit
+-rw-rw-r-- 1 michael michael 234516 Jun 17 15:46 csc.bit
+-rw-rw-r-- 1 michael michael 234516 Jun 17 15:50 ecc.bit
+
+(mcs files should be usable by xilinx impact)
+
+-r--r--r--    1 root     sys          545 Jun 13 23:13 VERSION
+-r--r--r--    1 root     sys          502 Jun 13 23:13 VERSION.TOI
+-r--r--r--    1 root     sys        20772 Jun 13 23:13 bootloader.bin
+-r--r--r--    1 root     sys       659495 Jun 13 23:13 csc.mcs
+-r--r--r--    1 root     sys       105044 Jun 13 23:13 cshi.mcs
+-r--r--r--    1 root     sys       105044 Jun 13 23:13 cslo.mcs
+-r--r--r--    1 root     sys       303744 Jun 13 23:13 dctl.mcs
+-r--r--r--    1 root     sys       659495 Jun 13 23:13 ecc.mcs
+-r--r--r--    1 root     sys       365709 Jun 13 23:13 fmta.mcs
+-r--r--r--    1 root     sys       365709 Jun 13 23:13 fmtb.mcs
+-r--r--r--    1 root     sys       105044 Jun 13 23:13 glock.mcs
+-r--r--r--    1 root     sys       196644 Jun 13 23:13 glue.mcs
+-r--r--r--    1 root     sys        45202 Jun 13 23:13 hdcntl.mcs
+-r--r--r--    1 root     sys       196644 Jun 13 23:13 hdoc_hd.mcs
+-r--r--r--    1 root     sys       196644 Jun 13 23:13 hdoc_sd.mcs
+-r--r--r--    1 root     sys       221558 Jun 13 23:13 out.mcs
+-r--r--r--    1 root     sys       615951 Jun 13 23:13 oxcc_1.mcs
+-r--r--r--    1 root     sys       615951 Jun 13 23:13 oxcc_2.mcs
+-r--r--r--    1 root     sys       615951 Jun 13 23:13 oxcc_3.mcs
+-r--r--r--    1 root     sys       615951 Jun 13 23:13 oxcc_4.mcs
+-r--r--r--    1 root     sys       615951 Jun 13 23:13 oxcc_5.mcs
+-r--r--r--    1 root     sys       615951 Jun 13 23:13 oxcc_6.mcs
+-r--r--r--    1 root     sys       507026 Jun 13 23:13 scxp13.mcs
+-r--r--r--    1 root     sys       507026 Jun 13 23:13 scxp24.mcs
+-r--r--r--    1 root     sys        45202 Jun 13 23:13 sdcntl.mcs
+-r--r--r--    1 root     sys       208744 Jun 13 23:13 vbob_a.bin
+-r--r--r--    1 root     sys       208744 Jun 13 23:13 vbob_b.bin
+-r--r--r--    1 root     sys       183564 Jun 13 23:13 vbob_ndci_a.bin
+-r--r--r--    1 root     sys       183564 Jun 13 23:13 vbob_ndci_b.bin
+
+//////////////////////////////////////
+// CURRENT FLASH INDEX
+//////////////////////////////////////
+
+vbob/findex> p
+
+index = 0
+Type: FI_FLASH_INDEX, Name: Flash Index, version 1.0
+Start = 0x00010000, length = 280, checksum = 0x4e74
+numberOfEntries = 5, sizeOfEachEntry = 56
+
+index = 1
+Type: FI_OPERATING_CODE, Name: vbob_a.bin, version custom
+Start = 0x00020000, length = 262144, checksum = 0xdde3
+entryPoint = 0x00000000, not active
+
+index = 2
+Type: FI_OPERATING_CODE, Name: vbob_b.bin, version custom
+Start = 0x00060000, length = 262144, checksum = 0x2eeb
+entryPoint = 0x00000000, active
+
+index = 3
+Type: FI_UNUSED_FLASH, Name: Unused Flash, version
+Start = 0x000a0000, length = 3407872, checksum = 0x0000
+(no special entries)
+
+index = 4
+Type: FI_NIC, Name: NIC, version 1.0
+Start = 0x003f0000, length = 113, checksum = 0xb547
+(no special entries)
+
+//////////////////////////////////////
+
+-bash-4.2$ od -t x1 vbob_a.bin | more
+
+0000000 76 62 6f 62 20 62 69 6e 00 02 00 00 00 05 2f 47
+0000020 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+0000040 30 10 17 fc 00 02 06 9e 00 02 07 6c 00 02 07 70
+0000060 00 02 07 74 00 02 07 78 00 02 07 7c 00 02 07 80
+0000100 00 02 07 84 00 02 07 88 00 02 07 8c 00 02 07 90
+0000120 00 02 07 94 00 02 07 98 00 02 07 9c 00 02 07 a0
+0000140 00 02 07 a4 00 02 07 a8 00 02 07 ac 00 02 07 b0
+0000160 00 02 07 b4 00 02 07 b8 00 02 07 bc 00 02 07 c0
+
+//////////////////////////////////////
+(this is promising ;>)
+//////////////////////////////////////
+
+vbob> m 0x20000 64
+00020000 30 10 17 fc 00 02 06 9e 00 02 07 6c 00 02 07 70 0..ü... ...l...p
+00020010 00 02 07 74 00 02 07 78 00 02 07 7c 00 02 07 80 ...t...x...|...
+00020020 00 02 07 84 00 02 07 88 00 02 07 8c 00 02 07 90 ... ...... ...
+00020030 00 02 07 94 00 02 07 98 00 02 07 9c 00 02 07 a0 ............
